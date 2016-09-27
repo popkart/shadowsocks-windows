@@ -16,7 +16,7 @@ namespace Shadowsocks.Controller
         public const int INTERNET_OPTION_SETTINGS_CHANGED = 39;
         public const int INTERNET_OPTION_REFRESH = 37;
         static bool _settingsReturn, _refreshReturn;
-
+        static bool is_first = true;
         public static void NotifyIE()
         {
             // These lines implement the Interface in the beginning of program 
@@ -51,6 +51,15 @@ namespace Shadowsocks.Controller
                     return;
                 }
                 if ( enabled ) {
+                    if(is_first)
+                    {
+                        IEProxyConfig  ieconfig = new IEProxyConfig();
+                        ieconfig.useProxy = (int)registry.GetValue("ProxyEnable") ;
+                        ieconfig.proxyServer = (string)registry.GetValue("ProxyServer");
+                        ieconfig.pacUrl = (string)registry.GetValue("AutoConfigURL");
+                        IEProxyConfig.Save(ieconfig);
+                        is_first = false;
+                    }
                     if ( global ) {
                         registry.SetValue( "ProxyEnable", 1 );
                         registry.SetValue( "ProxyServer", "127.0.0.1:" + config.localPort.ToString() );
@@ -67,9 +76,10 @@ namespace Shadowsocks.Controller
                         registry.SetValue( "AutoConfigURL", pacUrl );
                     }
                 } else {
-                    registry.SetValue( "ProxyEnable", 0 );
-                    registry.SetValue( "ProxyServer", "" );
-                    registry.SetValue( "AutoConfigURL", "" );
+                    IEProxyConfig ieconfig2 = IEProxyConfig.Load();
+                    registry.SetValue( "ProxyEnable", ieconfig2.useProxy );
+                    registry.SetValue( "ProxyServer", ieconfig2.proxyServer );
+                    registry.SetValue( "AutoConfigURL", ieconfig2.pacUrl );
                 }
 
                 //Set AutoDetectProxy
